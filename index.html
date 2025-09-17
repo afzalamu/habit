@@ -309,6 +309,18 @@
                     renderAll();
                 });
                 
+                const goalInput = document.createElement('input');
+                goalInput.type = 'number';
+                goalInput.value = habit.weeklyGoal || 0;
+                goalInput.min = 0;
+                goalInput.style.width = '4rem';
+                goalInput.style.textAlign = 'center';
+                goalInput.addEventListener('change', (e) => {
+                    habit.weeklyGoal = parseInt(e.target.value) || 0;
+                    saveData();
+                    renderAll();
+                });
+                
                 tallyGroup.appendChild(tallyCountSpan);
                 tallyGroup.appendChild(tallyBtn);
                 
@@ -336,18 +348,28 @@
             
             const headerRow = document.createElement('div');
             headerRow.classList.add('history-grid-header');
-            headerRow.innerHTML = `<div class="history-grid-label"></div>` + dates.map(date => `<div class="history-grid-cell"><span>${dayNames[date.getDay()]}</span><span>${date.getDate()}</span></div>`).join('');
+            const headerLabels = dates.map(date => {
+                const dayName = dayNames[date.getDay()];
+                const dayDate = date.getDate();
+                return `<div class="history-grid-cell"><span>${dayName}</span><span>${dayDate}</span></div>`;
+            }).join('');
+            headerRow.innerHTML = `<div class="history-grid-label">Habit</div>` + headerLabels;
             habitHistoryWrapperEl.appendChild(headerRow);
             
             habits.forEach((habit) => {
                 const habitRow = document.createElement('div');
                 habitRow.classList.add('history-grid-row');
-                habitRow.innerHTML = `<div class="history-grid-label">${habit.name}</div>` + dates.map(date => {
+                const historyCells = dates.map(date => {
                     const dateString = date.toISOString().slice(0, 10);
                     const count = habit.completion[dateString] || 0;
-                    const intensity = Math.min(Math.floor(count / 2) + 1, 12);
-                    return `<div class="history-grid-cell"><div class="dot completed-${intensity}"></div></div>`;
+                    let colorClass = '';
+                    if (count > 0) {
+                        const intensity = Math.min(Math.floor(count / 2) + 1, 12);
+                        colorClass = `completed-${intensity}`;
+                    }
+                    return `<div class="history-grid-cell"><div class="dot ${colorClass}"></div></div>`;
                 }).join('');
+                habitRow.innerHTML = `<div class="history-grid-label">${habit.name}</div>` + historyCells;
                 habitHistoryWrapperEl.appendChild(habitRow);
             });
         }
