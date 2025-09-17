@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Advanced Habit Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2C3E50;
+            --secondary-color: #3498DB;
+            --accent-color: #FBBF24;
+            --danger-color: #F44336;
+            --text-color: #555;
+            --light-text-color: #AAB7B8;
+            --bg-color: #F8F9F9;
+            --card-bg: #FFFFFF;
+            --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            --border-color: #E0E0E0;
+        }
+        [data-theme="dark"] {
+            --primary-color: #ECF0F1;
+            --secondary-color: #5DADE2;
+            --accent-color: #FCD34D;
+            --danger-color: #EF9A9A;
+            --text-color: #ECF0F1;
+            --light-text-color: #BDC3C7;
+            --bg-color: #212F3D;
+            --card-bg: #2C3E50;
+            --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --border-color: #4D6479;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            margin: 0;
+            box-sizing: border-box;
+            line-height: 1.5;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            max-width: 650px;
+            width: 100%;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+        h1, h2, h3 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--primary-color);
+            transition: color 0.5s ease;
+        }
+        h1 { font-weight: 700; font-size: 2.2rem; margin-top: 0; margin-bottom: 1.5rem; text-align: center; }
+        h2 { font-weight: 600; font-size: 1.8rem; margin-bottom: 1rem; }
+        h3 { font-weight: 600; font-size: 1.4rem; margin-bottom: 0.8rem; }
+        .habit-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; }
+        .habit-item {
+            display: flex; align-items: center; background-color: var(--bg-color); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);
+        }
+        .habit-item.completed { border-left: 5px solid var(--secondary-color); }
+        .habit-name { font-weight: 500; color: var(--primary-color); flex-grow: 1; display: flex; flex-direction: column; }
+        .habit-name small { font-size: 0.8rem; color: var(--light-text-color); margin-top: 0.2rem; }
+        .habit-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .tally-group { display: flex; align-items: center; gap: 0.5rem; margin-right: 1rem; }
+        .tally-count { font-weight: 600; color: var(--secondary-color); min-width: 1.5rem; text-align: center; }
+        .tally-btn {
+            background-color: var(--secondary-color); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; transition: background-color 0.2s, transform 0.2s; font-weight: 700; line-height: 1;
+        }
+        .tally-btn:hover { background-color: var(--primary-color); transform: scale(1.1); }
+        .add-habit-input-group { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+        .add-habit-input-group input, .add-habit-input-group select {
+            flex-grow: 1; padding: 0.8rem 1rem; border-radius: 50px; border: 1px solid var(--border-color); font-family: 'Inter', sans-serif; font-size: 1rem; background-color: var(--bg-color); color: var(--text-color); transition: border-color 0.2s, background-color 0.5s;
+        }
+        .add-habit-input-group input:focus, .add-habit-input-group select:focus { outline: none; border-color: var(--secondary-color); }
+        .add-habit-btn {
+            background-color: var(--secondary-color); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: background-color 0.2s, transform 0.2s;
+        }
+        .add-habit-btn:hover { background-color: var(--primary-color); transform: translateY(-2px); }
+        .delete-habit-btn { background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 1.2rem; opacity: 0.7; transition: opacity 0.2s, transform 0.2s, color 0.5s; }
+        .delete-habit-btn:hover { opacity: 1; transform: scale(1.1); }
+        
+        .history-grid-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 1rem;
+        }
+        .history-grid-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-grid-header, .history-grid-row {
+            display: grid;
+            grid-template-columns: 120px repeat(30, 1fr);
+            gap: 5px;
+            min-width: 600px;
+            align-items: center;
+        }
+        .history-grid-header {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--light-text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            position: sticky;
+            top: 0;
+            background-color: var(--card-bg);
+            z-index: 5;
+        }
+        .history-grid-row {
+            font-size: 0.9rem;
+        }
+        .history-grid-label {
+            font-weight: 500;
+            color: var(--primary-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-grid-cell {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--light-text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .history-grid-cell .dot {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 4px;
+            margin-top: 0.3rem;
+            transition: background-color 0.5s;
+        }
+        .history-grid-cell.active .dot { background-color: var(--secondary-color); }
+        .history-grid-cell.active.completed-1 { background-color: #C0C0C0; }
+        .history-grid-cell.active.completed-2 { background-color: #B0B0B0; }
+        .history-grid-cell.active.completed-3 { background-color: #A0A0A0; }
+        .history-grid-cell.active.completed-4 { background-color: #909090; }
+        .history-grid-cell.active.completed-5 { background-color: #808080; }
+        .history-grid-cell.active.completed-6 { background-color: #707070; }
+        .history-grid-cell.active.completed-7 { background-color: #606060; }
+        .history-grid-cell.active.completed-8 { background-color: #505050; }
+        .history-grid-cell.active.completed-9 { background-color: #404040; }
+        .history-grid-cell.active.completed-10 { background-color: #303030; }
+        .history-grid-cell.active.completed-11 { background-color: #202020; }
+        .history-grid-cell.active.completed-12 { background-color: #101010; }
+
+        .theme-toggle-btn {
+            background: none; border: none; color: var(--primary-color); font-size: 1.8rem; cursor: pointer; transition: color 0.5s ease; position: absolute; top: 1.5rem; right: 1.5rem; z-index: 10;
+        }
+        .theme-toggle-btn:hover { color: var(--secondary-color); }
+        .reset-all-btn {
+            background-color: var(--danger-color); color: white; border: none; padding: 0.9rem 2rem; border-radius: 50px; cursor: pointer; margin-top: 2rem; display: block; width: 100%; text-align: center; font-weight: 600; font-size: 1rem; transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .reset-all-btn:hover { background-color: #D32F2F; transform: translateY(-2px); }
+        .filter-buttons { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; }
+        .filter-buttons button {
+            background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.5rem 1rem; border-radius: 50px; cursor: pointer; transition: background-color 0.2s, color 0.2s; white-space: nowrap; font-size: 0.9rem;
+        }
+        .filter-buttons button.active { background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+        @media (min-width: 768px) {
+            .container { max-width: 800px; }
+            .history-grid-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .history-grid-header, .history-grid-row {
+                min-width: auto;
+                grid-template-columns: 200px repeat(30, 1fr);
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <button id="theme-toggle-btn" class="theme-toggle-btn">
+        <i class="fas fa-moon"></i>
+    </button>
+    <div class="container">
+        <div class="card">
+            <h1>My Habit Tracker</h1>
+            <div class="filter-buttons" id="category-filters">
+                <button class="active" data-category="All">All</button>
+                <button data-category="Health">Health</button>
+                <button data-category="Work">Work</button>
+                <button data-category="Personal">Personal</button>
+            </div>
+            <ul id="habit-list" class="habit-list"></ul>
+            <div class="add-habit-input-group">
+                <input type="text" id="new-habit-input" placeholder="Enter a new habit...">
+                <select id="new-habit-category">
+                    <option value="Health">Health</option>
+                    <option value="Work">Work</option>
+                    <option value="Personal">Personal</option>
+                </select>
+                <button id="add-habit-btn" class="add-habit-btn"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Weekly Progress</h2>
+            <canvas id="progress-chart"></canvas>
+        </div>
+        
+        <div class="card">
+            <h2>Habit History</h2>
+            <div class="history-grid-container">
+                <div id="habit-history-wrapper" class="history-grid-wrapper"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <button id="reset-all-button" class="reset-all-btn">Reset All Habits</button>
+        </div>
+    </div>
+    
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const body = document.body;
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', currentTheme);
+        if (currentTheme === 'dark') { themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>'; }
+        themeToggleBtn.addEventListener('click', () => {
+            let theme = body.getAttribute('data-theme');
+            if (theme === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            updateChartColors();
+        });
+
+        const habitListEl = document.getElementById('habit-list');
+        const newHabitInputEl = document.getElementById('new-habit-input');
+        const newHabitCategoryEl = document.getElementById('new-habit-category');
+        const addHabitBtnEl = document.getElementById('add-habit-btn');
+        const resetAllBtnEl = document.getElementById('reset-all-button');
+        const habitHistoryWrapperEl = document.getElementById('habit-history-wrapper');
+        const categoryFiltersEl = document.getElementById('category-filters');
+        const progressChartEl = document.getElementById('progress-chart').getContext('2d');
+        
+        const daysToDisplay = 30;
+        const dates = [];
+        const today = new Date();
+        for (let i = daysToDisplay - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            dates.push(date);
+        }
+
+        let habits = JSON.parse(localStorage.getItem('habits')) || [];
+        let currentFilter = 'All';
+
+        function saveData() {
+            localStorage.setItem('habits', JSON.stringify(habits));
+        }
+
+        function renderHabits() {
+            habitListEl.innerHTML = '';
+            const filteredHabits = currentFilter === 'All' ? habits : habits.filter(h => h.category === currentFilter);
+            
+            filteredHabits.forEach((habit, habitIndex) => {
+                const habitItem = document.createElement('li');
+                habitItem.classList.add('habit-item');
+                
+                const habitName = document.createElement('div');
+                habitName.classList.add('habit-name');
+                habitName.innerHTML = `<span>${habit.name}</span><small>Streak: ${calculateStreak(habit)} days</small>`;
+
+                const habitControls = document.createElement('div');
+                habitControls.classList.add('habit-controls');
+                
+                const tallyGroup = document.createElement('div');
+                tallyGroup.classList.add('tally-group');
+                
+                const tallyCountSpan = document.createElement('span');
+                tallyCountSpan.classList.add('tally-count');
+                const todayDate = new Date().toISOString().slice(0, 10);
+                tallyCountSpan.textContent = habit.completion[todayDate] || 0;
+                
+                const tallyBtn = document.createElement('button');
+                tallyBtn.classList.add('tally-btn');
+                tallyBtn.textContent = '+';
+                tallyBtn.addEventListener('click', () => {
+                    const currentCount = habit.completion[todayDate] || 0;
+                    habit.completion[todayDate] = currentCount + 1;
+                    saveData();
+                    renderAll();
+                });
+                
+                tallyGroup.appendChild(tallyCountSpan);
+                tallyGroup.appendChild(tallyBtn);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('delete-habit-btn');
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                deleteBtn.addEventListener('click', () => {
+                    habits.splice(habits.indexOf(habit), 1);
+                    saveData();
+                    renderAll();
+                });
+                
+                habitControls.appendChild(tallyGroup);
+                habitControls.appendChild(deleteBtn);
+                
+                habitItem.appendChild(habitName);
+                habitItem.appendChild(habitControls);
+                habitListEl.appendChild(habitItem);
+            });
+        }
+        
+        function renderHabitHistory() {
+            habitHistoryWrapperEl.innerHTML = '';
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            const headerRow = document.createElement('div');
+            headerRow.classList.add('history-grid-header');
+            headerRow.innerHTML = `<div class="history-grid-label"></div>` + dates.map(date => `<div class="history-grid-cell"><span>${dayNames[date.getDay()]}</span><span>${date.getDate()}</span></div>`).join('');
+            habitHistoryWrapperEl.appendChild(headerRow);
+            
+            habits.forEach((habit) => {
+                const habitRow = document.createElement('div');
+                habitRow.classList.add('history-grid-row');
+                habitRow.innerHTML = `<div class="history-grid-label">${habit.name}</div>` + dates.map(date => {
+                    const dateString = date.toISOString().slice(0, 10);
+                    const count = habit.completion[dateString] || 0;
+                    const intensity = Math.min(Math.floor(count / 2) + 1, 12);
+                    return `<div class="history-grid-cell"><div class="dot completed-${intensity}"></div></div>`;
+                }).join('');
+                habitHistoryWrapperEl.appendChild(habitRow);
+            });
+        }
+        
+        let progressChart;
+        function renderProgressChart() {
+            const chartData = getChartData();
+            if (progressChart) { progressChart.destroy(); }
+            
+            progressChart = new Chart(progressChartEl, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } },
+                        title: { display: true, text: 'Weekly Habit Progress', color: getComputedStyle(document.body).getPropertyValue('--primary-color') }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: getComputedStyle(document.body).getPropertyValue('--light-text-color') },
+                            grid: { color: getComputedStyle(document.body).getPropertyValue('--border-color') }
+                        },
+                        x: {
+                            ticks: { color: getComputedStyle(document.body).getPropertyValue('--light-text-color') },
+                            grid: { color: getComputedStyle(document.body).getPropertyValue('--border-color') }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getChartData() {
+            const labels = [];
+            const datasets = habits.map(habit => ({
+                label: habit.name,
+                data: [],
+                backgroundColor: getRandomColor(),
+                borderColor: getRandomColor(),
+                borderWidth: 1,
+            }));
+            
+            const weeksToDisplay = 4;
+            const today = new Date();
+            for (let i = weeksToDisplay - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - (i * 7));
+                labels.push(`Week of ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`);
+                
+                habits.forEach((habit, habitIndex) => {
+                    let totalCount = 0;
+                    for (let j = 0; j < 7; j++) {
+                        const day = new Date(date);
+                        day.setDate(date.getDate() + j);
+                        const dateString = day.toISOString().slice(0, 10);
+                        totalCount += habit.completion[dateString] || 0;
+                    }
+                    datasets[habitIndex].data.push(totalCount);
+                });
+            }
+            return { labels, datasets };
+        }
+
+        function updateChartColors() {
+            if (progressChart) {
+                const primary = getComputedStyle(document.body).getPropertyValue('--primary-color');
+                const lightText = getComputedStyle(document.body).getPropertyValue('--light-text-color');
+                const borderColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+                progressChart.options.plugins.title.color = primary;
+                progressChart.options.plugins.legend.labels.color = lightText;
+                progressChart.options.scales.y.ticks.color = lightText;
+                progressChart.options.scales.x.ticks.color = lightText;
+                progressChart.options.scales.y.grid.color = borderColor;
+                progressChart.options.scales.x.grid.color = borderColor;
+                progressChart.update();
+            }
+        }
+        
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) { color += letters[Math.floor(Math.random() * 16)]; }
+            return color;
+        }
+
+        function calculateStreak(habit) {
+            let streak = 0;
+            let currentDay = new Date();
+            for (let i = 0; i < daysToDisplay; i++) {
+                const dateString = currentDay.toISOString().slice(0, 10);
+                if (habit.completion[dateString] > 0) {
+                    streak++;
+                    currentDay.setDate(currentDay.getDate() - 1);
+                } else if (i > 0) {
+                    break;
+                } else {
+                    currentDay.setDate(currentDay.getDate() - 1);
+                }
+            }
+            return streak;
+        }
+        
+        function addHabit() {
+            const habitName = newHabitInputEl.value.trim();
+            const habitCategory = newHabitCategoryEl.value;
+            if (habitName) {
+                const newHabit = {
+                    name: habitName,
+                    category: habitCategory,
+                    completion: {},
+                    weeklyGoal: 0,
+                };
+                habits.push(newHabit);
+                saveData();
+                renderAll();
+                newHabitInputEl.value = '';
+            }
+        }
+        
+        function handleFilterClick(e) {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelectorAll('.filter-buttons button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.category;
+                renderAll();
+            }
+        }
+        
+        function renderAll() {
+            renderHabits();
+            renderHabitHistory();
+            renderProgressChart();
+        }
+        
+        addHabitBtnEl.addEventListener('click', addHabit);
+        newHabitInputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { addHabit(); } });
+        resetAllBtnEl.addEventListener('click', () => {
+            if (confirm("Are you sure you want to reset all habits? This cannot be undone.")) {
+                habits = [];
+                saveData();
+                renderAll();
+            }
+        });
+        categoryFiltersEl.addEventListener('click', handleFilterClick);
+        
+        renderAll();
+    </script>
+</body>
+</html>
